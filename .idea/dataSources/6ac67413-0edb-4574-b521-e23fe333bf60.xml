@@ -1,0 +1,117 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<dataSource name="Zaliczenie@localhost">
+  <database-model serializer="dbm" rdbms="POSTGRES" format-version="4.0">
+    <root id="1"/>
+    <database id="2" parent="1" name="Zaliczenie">
+      <ObjectId>16454</ObjectId>
+      <Current>1</Current>
+      <Visible>1</Visible>
+    </database>
+    <schema id="3" parent="2" name="public">
+      <ObjectId>2200</ObjectId>
+      <IntrospectionTimestamp>2017-05-16.18:58:49.509</IntrospectionTimestamp>
+      <IntrospectionStateNumber>582</IntrospectionStateNumber>
+      <Current>1</Current>
+      <Visible>1</Visible>
+    </schema>
+    <schema id="4" parent="2" name="pg_catalog">
+      <ObjectId>11</ObjectId>
+    </schema>
+    <schema id="5" parent="2" name="pg_toast">
+      <ObjectId>99</ObjectId>
+    </schema>
+    <schema id="6" parent="2" name="pg_temp_1">
+      <ObjectId>11848</ObjectId>
+    </schema>
+    <schema id="7" parent="2" name="pg_toast_temp_1">
+      <ObjectId>11849</ObjectId>
+    </schema>
+    <schema id="8" parent="2" name="information_schema">
+      <ObjectId>12113</ObjectId>
+    </schema>
+    <sequence id="9" parent="3" name="przedmioty_id_seq">
+      <ObjectId>16465</ObjectId>
+      <StateNumber>579</StateNumber>
+      <SequenceIdentity>1</SequenceIdentity>
+    </sequence>
+    <table id="10" parent="3" name="przedmioty">
+      <ObjectId>16460</ObjectId>
+      <StateNumber>582</StateNumber>
+    </table>
+    <table id="11" parent="3" name="wykladowcy">
+      <ObjectId>16455</ObjectId>
+      <StateNumber>567</StateNumber>
+    </table>
+    <column id="12" parent="10" name="id">
+      <Position>1</Position>
+      <DataType>integer|0</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>580</StateNumber>
+      <DefaultExpression>nextval(&apos;przedmioty_id_seq&apos;::regclass)</DefaultExpression>
+    </column>
+    <column id="13" parent="10" name="przedmiot">
+      <Position>2</Position>
+      <DataType>char(50)|0</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>578</StateNumber>
+    </column>
+    <column id="14" parent="10" name="wykladowca">
+      <Position>3</Position>
+      <DataType>integer|0</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>582</StateNumber>
+    </column>
+    <column id="15" parent="10" name="typ">
+      <Position>4</Position>
+      <DataType>char|0</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>578</StateNumber>
+    </column>
+    <index id="16" parent="10" name="przedmioty_pkey">
+      <ObjectId>16463</ObjectId>
+      <ColNames>id</ColNames>
+      <Unique>1</Unique>
+    </index>
+    <key id="17" parent="10" name="przedmioty_pkey">
+      <ObjectId>16464</ObjectId>
+      <ColNames>id</ColNames>
+      <UnderlyingIndexName>przedmioty_pkey</UnderlyingIndexName>
+      <Primary>1</Primary>
+    </key>
+    <column id="18" parent="11" name="id">
+      <Position>1</Position>
+      <DataType>integer|0</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>567</StateNumber>
+    </column>
+    <column id="19" parent="11" name="imie">
+      <Position>2</Position>
+      <DataType>char(50)|0</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>567</StateNumber>
+    </column>
+    <column id="20" parent="11" name="nazwisko">
+      <Position>3</Position>
+      <DataType>char(50)|0</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>567</StateNumber>
+    </column>
+    <column id="21" parent="11" name="tytul">
+      <Position>4</Position>
+      <DataType>char(50)|0</DataType>
+      <NotNull>1</NotNull>
+      <StateNumber>567</StateNumber>
+    </column>
+    <index id="22" parent="11" name="wykladowcy_pkey">
+      <ObjectId>16458</ObjectId>
+      <ColNames>id</ColNames>
+      <Unique>1</Unique>
+    </index>
+    <key id="23" parent="11" name="wykladowcy_pkey">
+      <ObjectId>16459</ObjectId>
+      <ColNames>id</ColNames>
+      <UnderlyingIndexName>wykladowcy_pkey</UnderlyingIndexName>
+      <Primary>1</Primary>
+    </key>
+  </database-model>
+</dataSource>
