@@ -22,10 +22,15 @@ public class Baza extends JFrame {
     }
 
     private JLabel sbar;
+    private JTable table;
     private JTextField ip = new JTextField("127.0.0.1");
     private JTextField dbName = new JTextField("Zaliczenie");
     private JTextField username = new JTextField("Admin");
     private JPasswordField pass = new JPasswordField("proba123");
+    private JTextField queryStart = new JTextField("SELECT");
+    private JTextField queryEnd = new JTextField("FROM");
+    private JTextField advQueryText = new JTextField("Zapytanie...");
+    private String statement = new String("");
     private JPanel gui = new JPanel();
     private static final Pattern PATTERN = Pattern.compile("^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
     Statement stmt = null;
@@ -41,6 +46,16 @@ public class Baza extends JFrame {
             username,
             new JLabel("Password"),
             pass
+    };
+    final JComponent[] selectQuery = new JComponent[]{
+            new JLabel("Select"),
+            queryStart,
+            new JLabel("From"),
+            queryEnd
+    };
+    final JComponent[] advancedQuery = new JComponent[]{
+            new JLabel("Zapytanie"),
+            advQueryText
     };
 
     private void initUI() {
@@ -74,7 +89,6 @@ public class Baza extends JFrame {
     private DefaultTableModel buildTableModel(ResultSet rs) throws SQLException{
 
         ResultSetMetaData metaData = rs.getMetaData();
-        // names of columns
         Vector<String> columnNames = new Vector<String>();
         int columnCount = metaData.getColumnCount();
         for (int column = 1; column <= columnCount; column++) {
@@ -97,16 +111,88 @@ public class Baza extends JFrame {
         JMenuBar menubar = new JMenuBar();
 
         JMenu databaseMenu = new JMenu("Baza...");
-        JMenu impMenu = new JMenu("Import...");
-        JMenu fileMenu = new JMenu("File...");
+        JMenu fileMenu = new JMenu("Glowny...");
 
-        JMenuItem connectDB = new JMenuItem("Connect to database");
-        JMenuItem newDB = new JMenuItem("Create new database");
-        JMenuItem newTable = new JMenuItem("Create new table");
-        JMenuItem deleteDB = new JMenuItem("Delete database");
-        JMenuItem deleteTable = new JMenuItem("Delete table");
-        JMenuItem editDatabase = new JMenuItem("Edit database");
-        JMenuItem editTable = new JMenuItem("Edit table");
+        JMenuItem connectDB = new JMenuItem("Polacz z baza");
+        JMenuItem newDB = new JMenuItem("Utworz nowa baze");
+        JMenuItem newTable = new JMenuItem("Stworz nowa tabele");
+        JMenuItem newQuery = new JMenuItem("Nowe zapytanie select");
+        JMenuItem newQueryAdv = new JMenuItem("Nowe zaawansowane zapytanie");
+        JMenuItem deleteDB = new JMenuItem("Usun baze");
+        JMenuItem deleteTable = new JMenuItem("Usun tabele");
+        JMenuItem editDatabase = new JMenuItem("Edytuj baze");
+        JMenuItem editTable = new JMenuItem("Edytuj tabele");
+        newQueryAdv.addActionListener(new java.awt.event.ActionListener(){
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt){
+                if(connection == null){
+                    JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
+                }
+                else{
+                    JOptionPane.showConfirmDialog(getContentPane(), advancedQuery, "Wprowadz zapytanie", JOptionPane.OK_CANCEL_OPTION);
+                    int answer  = JOptionPane.showConfirmDialog(getContentPane(), advQueryText.getText(), "Zapytanie", JOptionPane.OK_CANCEL_OPTION);
+                    if(advQueryText.getText() == "")
+                        JOptionPane.showMessageDialog(getContentPane(), "Zapytanie puste", "Blad zapytania", JOptionPane.ERROR_MESSAGE);
+                    else if(answer == JOptionPane.YES_OPTION){
+                        getContentPane().remove(gui);
+                        getContentPane().repaint();
+                        gui.removeAll();
+                        table = new JTable(0,0);
+                        try{
+                            stmt = connection.createStatement();
+                            rSet = stmt.executeQuery(advQueryText.getText());
+                            table = new JTable(buildTableModel(rSet));
+                            resizeColumnWidth(table);
+                            gui.add(new JScrollPane(table));
+                            getContentPane().add(gui);
+                            gui.updateUI();
+                            rSet.close();
+                            stmt.close();
+                        }catch (SQLException e){
+
+                        }
+                    }
+                    advQueryText.setText("Zapytanie");
+                }
+            }
+        });
+        newQuery.addActionListener(new java.awt.event.ActionListener(){
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt){
+                if(connection == null){
+                    JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
+                }
+                else{
+                    int answer = JOptionPane.showConfirmDialog(getContentPane(), selectQuery, "Enter query", JOptionPane.OK_CANCEL_OPTION);
+                    if(answer == JOptionPane.YES_OPTION) {
+                        getContentPane().remove(gui);
+                        getContentPane().repaint();
+                        gui.removeAll();
+                        table = new JTable(0,0);
+                        try {
+                            getContentPane().remove(gui);
+                            getContentPane().repaint();
+                            gui.removeAll();
+                            stmt = connection.createStatement();
+                            statement += "SELECT " + queryStart.getText();
+                            statement += " FROM " + queryEnd.getText();
+                            JOptionPane.showMessageDialog(getContentPane(), statement);
+                            rSet = stmt.executeQuery(statement);
+                            JTable table = new JTable(buildTableModel(rSet));
+                            resizeColumnWidth(table);
+                            gui.add(new JScrollPane(table));
+                            getContentPane().add(gui);
+                            gui.updateUI();
+                            statement = " ";
+                            rSet.close();
+                            stmt.close();
+                        } catch (SQLException e) {
+
+                        }
+                    }
+                }
+            }
+        });
         connectDB.addActionListener(new java.awt.event.ActionListener() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent evt) {
@@ -114,32 +200,20 @@ public class Baza extends JFrame {
                 if (result == JOptionPane.OK_OPTION) {
                     result = connect(ip.getText(), dbName.getText(), username.getText(), pass);
                     switch (result) {
-                        case -2: JOptionPane.showMessageDialog(getContentPane(), "Couldn't connect to database"); break;
-                        case -1: JOptionPane.showMessageDialog(getContentPane(), "Couldn't register database driver"); break;
-                        case 0: JOptionPane.showMessageDialog(getContentPane(), "Error connecting to database"); break;
-                        case 1: JOptionPane.showConfirmDialog(getContentPane(), "Connection succesfull"); break;
-
-                    }
-                    try {
-                        stmt = connection.createStatement();
-                        rSet = stmt.executeQuery("SELECT przedmioty.id, przedmioty.przedmiot, wykladowcy.imie, wykladowcy.nazwisko, przedmioty.typ FROM wykladowcy\n" +
-                                "  RIGHT JOIN przedmioty ON przedmioty.wykladowca = wykladowcy.id");
-                        JTable table = new JTable(buildTableModel(rSet));
-                        resizeColumnWidth(table);
-                        gui.add(new JScrollPane(table));
-                        getContentPane().add(gui);
-                        gui.updateUI();
-                    } catch (SQLException e) {
+                        case -2: JOptionPane.showMessageDialog(getContentPane(), "Couldn't connect to database", "Blad", JOptionPane.ERROR_MESSAGE); break;
+                        case -1: JOptionPane.showMessageDialog(getContentPane(), "Couldn't register database driver", "Blad", JOptionPane.ERROR_MESSAGE); break;
+                        case 0: JOptionPane.showMessageDialog(getContentPane(), "Error connecting to database", "Blad", JOptionPane.ERROR_MESSAGE); break;
+                        case 1: JOptionPane.showMessageDialog(getContentPane(), "Connection succesfull", "Sukces", JOptionPane.INFORMATION_MESSAGE); break;
                     }
                 } else {
                 }
 
             }
         });
-        databaseMenu.add(connectDB);
-        databaseMenu.addSeparator();
-        databaseMenu.add(newDB);
         databaseMenu.add(newTable);
+        databaseMenu.addSeparator();
+        databaseMenu.add(newQuery);
+        databaseMenu.add(newQueryAdv);
         databaseMenu.addSeparator();
         databaseMenu.add(deleteDB);
         databaseMenu.add(deleteTable);
@@ -147,28 +221,19 @@ public class Baza extends JFrame {
         databaseMenu.add(editDatabase);
         databaseMenu.add(editTable);
 
-        JMenuItem newsfMi = new JMenuItem("Import newsfeed list");
-        JMenuItem bookmMi = new JMenuItem("Import bookmarks");
-        JMenuItem mailMi = new JMenuItem("Import mail");
-
-        impMenu.add(newsfMi);
-        impMenu.add(bookmMi);
-        impMenu.add(mailMi);
-
-        JMenuItem newMi = new JMenuItem("New");
-        JMenuItem openMi = new JMenuItem("Open");
         JMenuItem saveMi = new JMenuItem("Save");
         JMenuItem exitMi = new JMenuItem("Exit");
+        connectDB.setToolTipText("Polacz z juz istniejaca baza");
+        newDB.setToolTipText("Stworz nowa baze");
         exitMi.setToolTipText("Exit application");
         exitMi.addActionListener((ActionEvent) -> {
             System.exit(0);
         });
         exitMi.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
-        fileMenu.add(newMi);
-        fileMenu.add(openMi);
+        fileMenu.add(newDB);
+        fileMenu.add(connectDB);
         fileMenu.add(saveMi);
         fileMenu.addSeparator();
-        fileMenu.add(impMenu);
         fileMenu.addSeparator();
         fileMenu.add(exitMi);
 
@@ -177,7 +242,6 @@ public class Baza extends JFrame {
 
         setJMenuBar(menubar);
     }
-
     private int connect(String ipAddress, String databaseName, String userName, JPasswordField password) {
         try {
             Class.forName("org.postgresql.Driver");
@@ -193,13 +257,6 @@ public class Baza extends JFrame {
             return 1;
         } else {
             return 0;
-        }
-    }
-    public void createTable(){
-        try {
-            rSet = stmt.executeQuery("SELECT * from przedmioty");
-            buildTableModel(rSet);
-        } catch (SQLException e) {
         }
     }
 
