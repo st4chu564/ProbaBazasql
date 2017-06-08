@@ -176,14 +176,18 @@ public class Baza extends JFrame {
                             stmt = connection.createStatement();
                             statement += "SELECT " + queryStart.getText();
                             statement += " FROM " + queryEnd.getText();
-                            JOptionPane.showMessageDialog(getContentPane(), statement);
                             rSet = stmt.executeQuery(statement);
-                            JTable table = new JTable(buildTableModel(rSet));
-                            resizeColumnWidth(table);
-                            gui.add(new JScrollPane(table));
-                            getContentPane().add(gui);
-                            gui.updateUI();
-                            statement = " ";
+                            if(!rSet.next()){
+                                JOptionPane.showMessageDialog(getContentPane(), "Odpowiedz pusta lub blad zapytania", "Blad", JOptionPane.OK_OPTION);
+                            }
+                            else {
+                                JTable table = new JTable(buildTableModel(rSet));
+                                resizeColumnWidth(table);
+                                gui.add(new JScrollPane(table));
+                                getContentPane().add(gui);
+                                gui.updateUI();
+                                statement = " ";
+                            }
                             rSet.close();
                             stmt.close();
                         } catch (SQLException e) {
