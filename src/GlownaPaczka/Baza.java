@@ -8,11 +8,10 @@ import java.sql.ResultSetMetaData;
 import java.util.*;
 import javax.swing.ImageIcon;
 import javax.swing.*;
-import javax.swing.border.Border;
-import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
+import java.util.List;
 import java.util.regex.Pattern;
 
 public class Baza extends JFrame {
@@ -32,11 +31,11 @@ public class Baza extends JFrame {
     private JTextField advQueryText = new JTextField("Zapytanie...");
     private String statement = new String("");
     private JPanel gui = new JPanel();
-    private static final Pattern PATTERN = Pattern.compile("^(([01]?\\d\\d?|2[0-4]\\d|25[0-5])\\.){3}([01]?\\d\\d?|2[0-4]\\d|25[0-5])$");
     Statement stmt = null;
     ResultSet rSet = null;
     Connection connection = null;
-
+    private Vector<String> tables = new Vector<String>();
+    private String selectedTable;
     final JComponent[] inputs = new JComponent[]{
             new JLabel("IP Address"),
             ip,
@@ -212,6 +211,30 @@ public class Baza extends JFrame {
                 } else {
                 }
 
+            }
+        });
+        editTable.addActionListener(new java.awt.event.ActionListener(){
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent evt){
+                if(connection == null){
+                    JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
+                }
+                else{
+                    try{
+                        DatabaseMetaData md = connection.getMetaData();
+                        String[] types = {"TABLE"};
+                        rSet = md.getTables(dbName.getText(), null, "%", types);
+                        while(rSet.next()){
+                            tables.add(new String(rSet.getString(3)));
+                        }
+                        Object[] tableNames = tables.toArray(new Object[tables.size()]);
+                        selectedTable = (String) JOptionPane.showInputDialog(getContentPane(), "Wybierz tabele", "Wybor tabeli", JOptionPane.QUESTION_MESSAGE, null, tableNames, tableNames[0]);
+                        JOptionPane.showConfirmDialog(getContentPane(),selectedTable,"Wybrana tabela", JOptionPane.OK_OPTION);
+                    }
+                    catch(SQLException e){
+
+                    }
+                }
             }
         });
         databaseMenu.add(newTable);
