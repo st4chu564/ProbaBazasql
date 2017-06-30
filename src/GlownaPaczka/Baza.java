@@ -1,17 +1,15 @@
 package GlownaPaczka;
 
-import com.sun.xml.internal.ws.util.StringUtils;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.KeyEvent;
-import java.sql.*;
-import java.sql.ResultSetMetaData;
-import java.util.*;
-import javax.swing.ImageIcon;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.KeyEvent;
+import java.sql.*;
+import java.util.Objects;
+import java.util.Vector;
 
 public class Baza extends JFrame {
 
