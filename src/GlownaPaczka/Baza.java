@@ -119,7 +119,7 @@ public class Baza extends JFrame {
 
         JMenuItem connectDB = new JMenuItem("Polacz z baza");
         JMenuItem newQuery = new JMenuItem("Zapytanie select");
-        JMenuItem newQueryAdv = new JMenuItem("Zapytanie select zaawansowane");
+        JMenuItem newQueryAdv = new JMenuItem("Zapytanie zaawansowane");
         JMenuItem insertIntoDB = new JMenuItem("Dodaj rekord");
         newQueryAdv.addActionListener(e -> advQuery());
         newQuery.addActionListener(e -> query());
@@ -140,7 +140,6 @@ public class Baza extends JFrame {
         });
         exitMi.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
         fileMenu.add(connectDB);
-        fileMenu.add(saveMi);
         fileMenu.addSeparator();
         fileMenu.add(exitMi);
 
@@ -272,7 +271,7 @@ public class Baza extends JFrame {
                 rSet = stmt.executeQuery(statement);
                 ResultSetMetaData rsmd = rSet.getMetaData();
                 columns.add("*");
-                for(int i = 1; i < rsmd.getColumnCount(); i++){
+                for(int i = 1; i <= rsmd.getColumnCount(); i++){
                     System.out.println(rsmd.getColumnName(i));
                     columns.add(rsmd.getColumnName(i));
                 }
@@ -314,6 +313,9 @@ public class Baza extends JFrame {
 
     private void Remove() {
         String selectedRow = String.valueOf(table.getSelectedRow() + 1);
+        int a = JOptionPane.showConfirmDialog(getContentPane(),"Czy na pewno chcesz usunac ten rekord?", "Potwierdz", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+        if(a == JOptionPane.CANCEL_OPTION)
+            return;
         statement = "delete from " + selectedTable + " where id = " + selectedRow;
         try{
             stmt = connection.createStatement();
@@ -339,6 +341,8 @@ public class Baza extends JFrame {
                 }
                 else{
                     String answer = (String) JOptionPane.showInputDialog(getContentPane(), rsmd.getColumnName(i), "Podaj wartosc", JOptionPane.INFORMATION_MESSAGE);
+                    if(answer == null && answer.length() < 1)
+                        return;
                     System.out.println(rsmd.getColumnType(i));
                     if(answer != ""){
                         if(rsmd.getColumnType(i) == 4){
@@ -366,13 +370,6 @@ public class Baza extends JFrame {
         tables.clear();
         columns.clear();
     }
-
-
-    private void Edytuj() {
-        String row = String.valueOf(table.getSelectedRow());
-        button.setText(row);
-    }
-
     private void advQuery() {
         if(connection == null){
             JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
@@ -380,12 +377,17 @@ public class Baza extends JFrame {
         else{
             JOptionPane.showConfirmDialog(getContentPane(), advancedQuery, "Wprowadz zapytanie", JOptionPane.OK_CANCEL_OPTION);
             int answer  = JOptionPane.showConfirmDialog(getContentPane(), advQueryText.getText(), "Zapytanie", JOptionPane.OK_CANCEL_OPTION);
+            if(advQueryText.getText().startsWith("$"))
+                System.out.println("dolec");
             if(advQueryText.getText() == "")
                 JOptionPane.showMessageDialog(getContentPane(), "Zapytanie puste", "Blad zapytania", JOptionPane.ERROR_MESSAGE);
-            else if(advQueryText.getText().toLowerCase().contains("drop") || advQueryText.getText().toLowerCase().contains("delete") || advQueryText.getText().toLowerCase().contains("insert")
-                    || advQueryText.getText().toLowerCase().contains("update") || advQueryText.getText().toLowerCase().contains("create"))
+            else if((advQueryText.getText().toLowerCase().contains("drop") || advQueryText.getText().toLowerCase().contains("delete") || advQueryText.getText().toLowerCase().contains("insert")
+                    || advQueryText.getText().toLowerCase().contains("update") || advQueryText.getText().toLowerCase().contains("create")) && !advQueryText.getText().startsWith("$")) {
                 JOptionPane.showMessageDialog(getContentPane(), "Nie poprawne zapytanie", "Nie poprawne zapytanie", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
             else if(answer == JOptionPane.YES_OPTION){
+                advQueryText.getText().replace("$", "");
                 getContentPane().remove(gui);
                 getContentPane().repaint();
                 gui.removeAll();
@@ -411,11 +413,6 @@ public class Baza extends JFrame {
 
         tables.clear();
         columns.clear();
-    }
-
-
-    private void dodajRekord() {
-        gui.removeAll();
     }
 
     private int connect(String ipAddress, String databaseName, String userName, JPasswordField password) {
