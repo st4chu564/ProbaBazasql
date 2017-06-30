@@ -175,7 +175,6 @@ public class Baza extends JFrame {
             rSet.next();
             int lastID = rSet.getInt("id") + 1;
             for(int i = 1; i <= rsmd.getColumnCount(); i++){
-                System.out.println(rsmd.getColumnName(i));
                 columns.add(rsmd.getColumnName(i));
             }
             GridBagConstraints c = new GridBagConstraints();
@@ -228,7 +227,6 @@ public class Baza extends JFrame {
                 stmt = connection.createStatement();
                 stmt.execute(statement);
                 stmt.close();
-                System.out.println("cos");
                 gui.removeAll();
                 gui.add(table);
                 gui.updateUI();
@@ -317,7 +315,6 @@ public class Baza extends JFrame {
 
     private void Remove() {
         String selectedRow = String.valueOf(table.getValueAt(table.getSelectedRow(), 0));
-        System.out.println(selectedRow);
         int a = JOptionPane.showConfirmDialog(getContentPane(),"Czy na pewno chcesz usunac ten rekord?", "Potwierdz", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
         if(a == JOptionPane.CANCEL_OPTION)
             return;
@@ -332,7 +329,6 @@ public class Baza extends JFrame {
 
     private void Click() {
         String selectedRow = String.valueOf(table.getValueAt(table.getSelectedRow(), 0));
-        System.out.println(selectedRow);
         try{
             statement = "select * from " + selectedTable;
             stmt = connection.createStatement();
@@ -365,7 +361,6 @@ public class Baza extends JFrame {
             PreparedStatement ps = connection.prepareStatement(statement);
             ps.executeUpdate();
             table.repaint();
-            System.out.println("text");
         }
         catch(SQLException e){
 
