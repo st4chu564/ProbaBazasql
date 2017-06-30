@@ -437,7 +437,3 @@ public class Baza extends JFrame {
 
         });
     }
-
-    private class MyClass {
-    }
-}
