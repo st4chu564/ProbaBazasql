@@ -185,9 +185,7 @@ public class Baza extends JFrame {
                 c.gridy++;
                 JTextField value = new JTextField();
                 if(first){
-                    value.setEnabled(false);
                     value.setText(String.valueOf(lastID));
-                    first = false;
                 }
                 fields.add(value);
                 value.setPreferredSize(new Dimension(150, 25));
