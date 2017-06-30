@@ -136,6 +136,10 @@ public class Baza extends JFrame {
         connectDB.setToolTipText("Polacz z juz istniejaca baza");
         exitMi.setToolTipText("Exit application");
         exitMi.addActionListener((ActionEvent) -> {
+            try{
+                connection.close();
+            }
+            catch (SQLException e){}
             System.exit(0);
         });
         exitMi.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
@@ -150,6 +154,10 @@ public class Baza extends JFrame {
     }
 
     private void Insert() {
+        if(connection == null) {
+            JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
         try{
             gui.removeAll();
             DatabaseMetaData md = connection.getMetaData();
@@ -206,31 +214,30 @@ public class Baza extends JFrame {
     }
 
     private void insertRecord() {
-        statement = "INSERT INTO " + selectedTable + " VALUES(";
-        for(JTextField pole: fields){
-            if(pole.getText().contains("[0-9]+")){
-                statement += pole.getText() + ", ";
+            statement = "INSERT INTO " + selectedTable + " VALUES(";
+            for (JTextField pole : fields) {
+                if (pole.getText().contains("[0-9]+")) {
+                    statement += pole.getText() + ", ";
+                } else {
+                    statement += "'" + pole.getText() + "', ";
+                }
             }
-            else{
-                statement += "'" + pole.getText() + "', ";
+            statement = statement.substring(0, statement.length() - 2);
+            statement += ")";
+            try {
+                stmt = connection.createStatement();
+                stmt.execute(statement);
+                stmt.close();
+                System.out.println("cos");
+                gui.removeAll();
+                gui.add(table);
+                gui.updateUI();
+            } catch (SQLException e) {
             }
-        }
-        statement = statement.substring(0, statement.length() - 2);
-        statement += ")";
-        try{
-            stmt = connection.createStatement();
-            stmt.execute(statement);
-            stmt.close();
-            System.out.println("cos");
-            gui.removeAll();
-            gui.add(table);
-            gui.updateUI();
-        }
-        catch(SQLException e){}
 
-        tables.clear();
-        columns.clear();
-    }
+            tables.clear();
+            columns.clear();
+        }
 
     private void connectToDB() {
         int result = JOptionPane.showConfirmDialog(getContentPane(), inputs, "Enter options", JOptionPane.OK_CANCEL_OPTION);
@@ -309,7 +316,8 @@ public class Baza extends JFrame {
         }
 
     private void Remove() {
-        String selectedRow = String.valueOf(table.getSelectedRow() + 1);
+        String selectedRow = String.valueOf(table.getValueAt(table.getSelectedRow(), 0));
+        System.out.println(selectedRow);
         int a = JOptionPane.showConfirmDialog(getContentPane(),"Czy na pewno chcesz usunac ten rekord?", "Potwierdz", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
         if(a == JOptionPane.CANCEL_OPTION)
             return;
@@ -323,7 +331,8 @@ public class Baza extends JFrame {
     }
 
     private void Click() {
-        String selectedRow = String.valueOf(table.getSelectedRow() + 1);
+        String selectedRow = String.valueOf(table.getValueAt(table.getSelectedRow(), 0));
+        System.out.println(selectedRow);
         try{
             statement = "select * from " + selectedTable;
             stmt = connection.createStatement();
@@ -340,7 +349,6 @@ public class Baza extends JFrame {
                     String answer = (String) JOptionPane.showInputDialog(getContentPane(), rsmd.getColumnName(i), "Podaj wartosc", JOptionPane.INFORMATION_MESSAGE);
                     if(answer == null && answer.length() < 1)
                         return;
-                    System.out.println(rsmd.getColumnType(i));
                     if(answer != ""){
                         if(rsmd.getColumnType(i) == 4){
                             if(answer.matches("[0-9]+")){
@@ -380,6 +388,8 @@ public class Baza extends JFrame {
                 JOptionPane.showMessageDialog(getContentPane(), "Nie poprawne zapytanie", "Nie poprawne zapytanie", JOptionPane.ERROR_MESSAGE);
                 return;
             }
+            else if(answer == JOptionPane.CANCEL_OPTION)
+                return;
             else if(answer == JOptionPane.YES_OPTION){
                 if(advQueryText.getText().startsWith("$"))
                     statement = advQueryText.getText().substring(1);
