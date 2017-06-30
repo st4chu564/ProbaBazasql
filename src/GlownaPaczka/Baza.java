@@ -32,6 +32,7 @@ public class Baza extends JFrame {
     private JComboBox<String> combo = null;
     private String statement;
     private JButton addRecord = new JButton("Dodaj rekord");
+    private JButton removeRecord = new JButton("Usun");
     private JPanel gui = new JPanel();
             Statement stmt = null;
     ResultSet rSet = null;
@@ -208,7 +209,12 @@ public class Baza extends JFrame {
     private void insertRecord() {
         statement = "INSERT INTO " + selectedTable + " VALUES(";
         for(JTextField pole: fields){
-            statement += pole.getText() + ", ";
+            if(pole.getText().contains("[0-9]+")){
+                statement += pole.getText() + ", ";
+            }
+            else{
+                statement += "'" + pole.getText() + "', ";
+            }
         }
         statement = statement.substring(0, statement.length() - 2);
         statement += ")";
@@ -216,37 +222,12 @@ public class Baza extends JFrame {
             stmt = connection.createStatement();
             stmt.execute(statement);
             stmt.close();
+            System.out.println("cos");
             gui.removeAll();
             gui.add(table);
             gui.updateUI();
         }
         catch(SQLException e){}
-
-        tables.clear();
-        columns.clear();
-    }
-
-    private void editTableMethod() {
-        if(connection == null){
-            JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
-        }
-        else{
-            try{
-                DatabaseMetaData md = connection.getMetaData();
-                String[] types = {"TABLE"};
-                rSet = md.getTables(dbName.getText(), null, "%", types);
-                while(rSet.next()){
-                    tables.add(new String(rSet.getString(3)));
-                }
-                Object[] tableNames = tables.toArray(new Object[tables.size()]);
-                selectedTable = (String) JOptionPane.showInputDialog(getContentPane(), "Wybierz tabele", "Wybor tabeli", JOptionPane.QUESTION_MESSAGE, null, tableNames, tableNames[0]);
-                JOptionPane.showConfirmDialog(getContentPane(),selectedTable,"Wybrana tabela", JOptionPane.OK_OPTION);
-
-            }
-            catch(SQLException e){
-
-            }
-        }
 
         tables.clear();
         columns.clear();
@@ -304,14 +285,19 @@ public class Baza extends JFrame {
                 table = new JTable(buildTableModel(rSet));
                 table.setShowVerticalLines(false);
                 button.addActionListener(e -> Click());
+                removeRecord.addActionListener(e -> Remove());
                 GridBagConstraints c = new GridBagConstraints();
                 table.setSize(gui.getWidth(), 500);
                 resizeColumnWidth(table);
                 c.gridx = 0;
                 c.gridy = 0;
+                c.gridwidth = 2;
                 gui.add(new JScrollPane(table), c);
+                c.gridwidth = 1;
                 c.gridy = 1;
                 gui.add(button, c);
+                c.gridx = 1;
+                gui.add(removeRecord, c);
                 getContentPane().add(gui);
                 gui.updateUI();
                 columns.clear();
@@ -325,6 +311,17 @@ public class Baza extends JFrame {
         tables.clear();
         columns.clear();
         }
+
+    private void Remove() {
+        String selectedRow = String.valueOf(table.getSelectedRow() + 1);
+        statement = "delete from " + selectedTable + " where id = " + selectedRow;
+        try{
+            stmt = connection.createStatement();
+            stmt.execute(statement);
+        }
+        catch(SQLException e){}
+
+    }
 
     private void Click() {
         String selectedRow = String.valueOf(table.getSelectedRow() + 1);
