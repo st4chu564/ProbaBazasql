@@ -1,5 +1,6 @@
 package GlownaPaczka;
 
+import com.sun.xml.internal.ws.util.StringUtils;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyEvent;
@@ -11,8 +12,6 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumnModel;
-import java.util.List;
-import java.util.regex.Pattern;
 
 public class Baza extends JFrame {
 
@@ -29,12 +28,17 @@ public class Baza extends JFrame {
     private JTextField queryStart = new JTextField("SELECT");
     private JTextField queryEnd = new JTextField("FROM");
     private JTextField advQueryText = new JTextField("Zapytanie...");
-    private String statement = new String("");
+    private JButton button = new JButton("Edytuj");
+    private JComboBox<String> combo = null;
+    private String statement;
+    private JButton addRecord = new JButton("Dodaj rekord");
     private JPanel gui = new JPanel();
-    Statement stmt = null;
+            Statement stmt = null;
     ResultSet rSet = null;
     Connection connection = null;
+    private Vector<JTextField> fields = new Vector<>();
     private Vector<String> tables = new Vector<String>();
+    private Vector<String> columns = new Vector<String>();
     private String selectedTable;
     final JComponent[] inputs = new JComponent[]{
             new JLabel("IP Address"),
@@ -61,9 +65,9 @@ public class Baza extends JFrame {
         sbar = new JLabel("0");
         sbar.setBorder(BorderFactory.createEtchedBorder());
         createMenuBar();
-        setLayout(new BorderLayout());
+        setLayout(new GridBagLayout());
         setSize(1600, 900);
-        gui.setLayout(new BorderLayout());
+        gui.setLayout(new GridBagLayout());
         gui.setSize(1600, 900);
         ImageIcon icon = new ImageIcon("E:\\JavaProjects\\ProbaBazasql\\src\\GlownaPaczka\\Icon.png");
         setIconImage(icon.getImage());
@@ -113,154 +117,29 @@ public class Baza extends JFrame {
         JMenu fileMenu = new JMenu("Glowny...");
 
         JMenuItem connectDB = new JMenuItem("Polacz z baza");
-        JMenuItem newDB = new JMenuItem("Utworz nowa baze");
-        JMenuItem newTable = new JMenuItem("Stworz nowa tabele");
-        JMenuItem newQuery = new JMenuItem("Nowe zapytanie select");
-        JMenuItem newQueryAdv = new JMenuItem("Nowe zaawansowane zapytanie");
-        JMenuItem deleteDB = new JMenuItem("Usun baze");
-        JMenuItem deleteTable = new JMenuItem("Usun tabele");
-        JMenuItem editDatabase = new JMenuItem("Edytuj baze");
-        JMenuItem editTable = new JMenuItem("Edytuj tabele");
-        newQueryAdv.addActionListener(new java.awt.event.ActionListener(){
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt){
-                if(connection == null){
-                    JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
-                }
-                else{
-                    JOptionPane.showConfirmDialog(getContentPane(), advancedQuery, "Wprowadz zapytanie", JOptionPane.OK_CANCEL_OPTION);
-                    int answer  = JOptionPane.showConfirmDialog(getContentPane(), advQueryText.getText(), "Zapytanie", JOptionPane.OK_CANCEL_OPTION);
-                    if(advQueryText.getText() == "")
-                        JOptionPane.showMessageDialog(getContentPane(), "Zapytanie puste", "Blad zapytania", JOptionPane.ERROR_MESSAGE);
-                    else if(answer == JOptionPane.YES_OPTION){
-                        getContentPane().remove(gui);
-                        getContentPane().repaint();
-                        gui.removeAll();
-                        table = new JTable(0,0);
-                        try{
-                            stmt = connection.createStatement();
-                            rSet = stmt.executeQuery(advQueryText.getText());
-                            table = new JTable(buildTableModel(rSet));
-                            resizeColumnWidth(table);
-                            gui.add(new JScrollPane(table));
-                            getContentPane().add(gui);
-                            gui.updateUI();
-                            rSet.close();
-                            stmt.close();
-                        }catch (SQLException e){
-
-                        }
-                    }
-                    advQueryText.setText("Zapytanie");
-                }
-            }
-        });
-        newQuery.addActionListener(new java.awt.event.ActionListener(){
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt){
-                if(connection == null){
-                    JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
-                }
-                else{
-                    int answer = JOptionPane.showConfirmDialog(getContentPane(), selectQuery, "Enter query", JOptionPane.OK_CANCEL_OPTION);
-                    if(answer == JOptionPane.YES_OPTION) {
-                        getContentPane().remove(gui);
-                        getContentPane().repaint();
-                        gui.removeAll();
-                        table = new JTable(0,0);
-                        try {
-                            getContentPane().remove(gui);
-                            getContentPane().repaint();
-                            gui.removeAll();
-                            stmt = connection.createStatement();
-                            statement += "SELECT " + queryStart.getText();
-                            statement += " FROM " + queryEnd.getText();
-                            rSet = stmt.executeQuery(statement);
-                            if(!rSet.next()){
-                                JOptionPane.showMessageDialog(getContentPane(), "Odpowiedz pusta lub blad zapytania", "Blad", JOptionPane.OK_OPTION);
-                            }
-                            else {
-                                JTable table = new JTable(buildTableModel(rSet));
-                                resizeColumnWidth(table);
-                                gui.add(new JScrollPane(table));
-                                getContentPane().add(gui);
-                                gui.updateUI();
-                                statement = " ";
-                            }
-                            rSet.close();
-                            stmt.close();
-                        } catch (SQLException e) {
-
-                        }
-                    }
-                }
-            }
-        });
-        connectDB.addActionListener(new java.awt.event.ActionListener() {
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt) {
-                int result = JOptionPane.showConfirmDialog(getContentPane(), inputs, "Enter options", JOptionPane.OK_CANCEL_OPTION);
-                if (result == JOptionPane.OK_OPTION) {
-                    result = connect(ip.getText(), dbName.getText(), username.getText(), pass);
-                    switch (result) {
-                        case -2: JOptionPane.showMessageDialog(getContentPane(), "Couldn't connect to database", "Blad", JOptionPane.ERROR_MESSAGE); break;
-                        case -1: JOptionPane.showMessageDialog(getContentPane(), "Couldn't register database driver", "Blad", JOptionPane.ERROR_MESSAGE); break;
-                        case 0: JOptionPane.showMessageDialog(getContentPane(), "Error connecting to database", "Blad", JOptionPane.ERROR_MESSAGE); break;
-                        case 1: JOptionPane.showMessageDialog(getContentPane(), "Connection succesfull", "Sukces", JOptionPane.INFORMATION_MESSAGE); break;
-                    }
-                } else {
-                }
-
-            }
-        });
-        editTable.addActionListener(new java.awt.event.ActionListener(){
-            @Override
-            public void actionPerformed(java.awt.event.ActionEvent evt){
-                if(connection == null){
-                    JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
-                }
-                else{
-                    try{
-                        DatabaseMetaData md = connection.getMetaData();
-                        String[] types = {"TABLE"};
-                        rSet = md.getTables(dbName.getText(), null, "%", types);
-                        while(rSet.next()){
-                            tables.add(new String(rSet.getString(3)));
-                        }
-                        Object[] tableNames = tables.toArray(new Object[tables.size()]);
-                        selectedTable = (String) JOptionPane.showInputDialog(getContentPane(), "Wybierz tabele", "Wybor tabeli", JOptionPane.QUESTION_MESSAGE, null, tableNames, tableNames[0]);
-                        JOptionPane.showConfirmDialog(getContentPane(),selectedTable,"Wybrana tabela", JOptionPane.OK_OPTION);
-                    }
-                    catch(SQLException e){
-
-                    }
-                }
-            }
-        });
-        databaseMenu.add(newTable);
-        databaseMenu.addSeparator();
+        JMenuItem newQuery = new JMenuItem("Zapytanie select");
+        JMenuItem newQueryAdv = new JMenuItem("Zapytanie select zaawansowane");
+        JMenuItem insertIntoDB = new JMenuItem("Dodaj rekord");
+        newQueryAdv.addActionListener(e -> advQuery());
+        newQuery.addActionListener(e -> query());
+        connectDB.addActionListener(e -> connectToDB());
+        insertIntoDB.addActionListener(e -> Insert());
         databaseMenu.add(newQuery);
         databaseMenu.add(newQueryAdv);
         databaseMenu.addSeparator();
-        databaseMenu.add(deleteDB);
-        databaseMenu.add(deleteTable);
-        databaseMenu.addSeparator();
-        databaseMenu.add(editDatabase);
-        databaseMenu.add(editTable);
+        databaseMenu.add(insertIntoDB);
+
 
         JMenuItem saveMi = new JMenuItem("Save");
         JMenuItem exitMi = new JMenuItem("Exit");
         connectDB.setToolTipText("Polacz z juz istniejaca baza");
-        newDB.setToolTipText("Stworz nowa baze");
         exitMi.setToolTipText("Exit application");
         exitMi.addActionListener((ActionEvent) -> {
             System.exit(0);
         });
         exitMi.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
-        fileMenu.add(newDB);
         fileMenu.add(connectDB);
         fileMenu.add(saveMi);
-        fileMenu.addSeparator();
         fileMenu.addSeparator();
         fileMenu.add(exitMi);
 
@@ -269,6 +148,279 @@ public class Baza extends JFrame {
 
         setJMenuBar(menubar);
     }
+
+    private void Insert() {
+        try{
+            gui.removeAll();
+            DatabaseMetaData md = connection.getMetaData();
+            String[] types = {"TABLE"};
+            rSet = md.getTables(dbName.getText(), null, "%", types);
+            while(rSet.next()){
+                tables.add(new String(rSet.getString(3)));
+            }
+            Object[] tableNames = tables.toArray(new Object[tables.size()]);
+            selectedTable = (String) JOptionPane.showInputDialog(getContentPane(), "Wybierz tabele", "Wybor tabeli", JOptionPane.QUESTION_MESSAGE, null, tableNames, tableNames[0]);
+            statement = "SELECT * FROM " + selectedTable + " ORDER BY id DESC";
+            stmt = connection.createStatement();
+            rSet = stmt.executeQuery(statement);
+            ResultSetMetaData rsmd = rSet.getMetaData();
+            rSet.next();
+            int lastID = rSet.getInt("id") + 1;
+            for(int i = 1; i <= rsmd.getColumnCount(); i++){
+                System.out.println(rsmd.getColumnName(i));
+                columns.add(rsmd.getColumnName(i));
+            }
+            GridBagConstraints c = new GridBagConstraints();
+            c.gridx = 0;
+            c.gridy = 0;
+            boolean first = true;
+            for(String name : columns){
+                JLabel nazwa = new JLabel(name);
+                gui.add(nazwa, c);
+                c.gridy++;
+                JTextField value = new JTextField();
+                if(first){
+                    value.setEnabled(false);
+                    value.setText(String.valueOf(lastID));
+                    first = false;
+                }
+                fields.add(value);
+                value.setPreferredSize(new Dimension(150, 25));
+                gui.add(value, c);
+                c.gridy = 0;
+                c.gridx++;
+            }
+            addRecord.setPreferredSize(new Dimension(fields.size() * 150,25));
+            addRecord.addActionListener(e -> insertRecord());
+            c.gridy = 2;
+            c.gridx = 0;
+            c.gridwidth = 4;
+            gui.add(addRecord, c);
+            getContentPane().add(gui);
+            gui.updateUI();
+            tables.clear();
+            columns.clear();
+
+        }
+        catch(SQLException e){}
+    }
+
+    private void insertRecord() {
+        statement = "INSERT INTO " + selectedTable + " VALUES(";
+        for(JTextField pole: fields){
+            statement += pole.getText() + ", ";
+        }
+        statement = statement.substring(0, statement.length() - 2);
+        statement += ")";
+        try{
+            stmt = connection.createStatement();
+            stmt.execute(statement);
+            stmt.close();
+            gui.removeAll();
+            gui.add(table);
+            gui.updateUI();
+        }
+        catch(SQLException e){}
+
+        tables.clear();
+        columns.clear();
+    }
+
+    private void editTableMethod() {
+        if(connection == null){
+            JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
+        }
+        else{
+            try{
+                DatabaseMetaData md = connection.getMetaData();
+                String[] types = {"TABLE"};
+                rSet = md.getTables(dbName.getText(), null, "%", types);
+                while(rSet.next()){
+                    tables.add(new String(rSet.getString(3)));
+                }
+                Object[] tableNames = tables.toArray(new Object[tables.size()]);
+                selectedTable = (String) JOptionPane.showInputDialog(getContentPane(), "Wybierz tabele", "Wybor tabeli", JOptionPane.QUESTION_MESSAGE, null, tableNames, tableNames[0]);
+                JOptionPane.showConfirmDialog(getContentPane(),selectedTable,"Wybrana tabela", JOptionPane.OK_OPTION);
+
+            }
+            catch(SQLException e){
+
+            }
+        }
+
+        tables.clear();
+        columns.clear();
+    }
+
+    private void connectToDB() {
+        int result = JOptionPane.showConfirmDialog(getContentPane(), inputs, "Enter options", JOptionPane.OK_CANCEL_OPTION);
+        if (result == JOptionPane.OK_OPTION) {
+            result = connect(ip.getText(), dbName.getText(), username.getText(), pass);
+            switch (result) {
+                case -2: JOptionPane.showMessageDialog(getContentPane(), "Couldn't connect to database", "Blad", JOptionPane.ERROR_MESSAGE); break;
+                case -1: JOptionPane.showMessageDialog(getContentPane(), "Couldn't register database driver", "Blad", JOptionPane.ERROR_MESSAGE); break;
+                case 0: JOptionPane.showMessageDialog(getContentPane(), "Error connecting to database", "Blad", JOptionPane.ERROR_MESSAGE); break;
+                case 1: JOptionPane.showMessageDialog(getContentPane(), "Connection succesfull", "Sukces", JOptionPane.INFORMATION_MESSAGE); break;
+            }
+        } else {
+        }
+
+        tables.clear();
+        columns.clear();
+    }
+
+    private void query() {
+
+        if(connection == null){
+            JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
+        }
+        else{
+            gui.removeAll();
+            Vector <String> Tabele = new Vector<>();
+            try{
+                DatabaseMetaData md = connection.getMetaData();
+                String[] types = {"TABLE"};
+                rSet = md.getTables(dbName.getText(), null, "%", types);
+                while(rSet.next()){
+                    tables.add(new String(rSet.getString(3)));
+                }
+                Object[] tableNames = tables.toArray(new Object[tables.size()]);
+                selectedTable = (String) JOptionPane.showInputDialog(getContentPane(), "Wybierz tabele", "Wybor tabeli", JOptionPane.QUESTION_MESSAGE, null, tableNames, tableNames[0]);
+                statement = "SELECT * FROM " + selectedTable;
+                stmt = connection.createStatement();
+                rSet = stmt.executeQuery(statement);
+                ResultSetMetaData rsmd = rSet.getMetaData();
+                columns.add("*");
+                for(int i = 1; i < rsmd.getColumnCount(); i++){
+                    System.out.println(rsmd.getColumnName(i));
+                    columns.add(rsmd.getColumnName(i));
+                }
+                System.out.println("proba");
+                Object[] columnNames = columns.toArray(new Object[columns.size()]);
+                String selectedColumn = (String) JOptionPane.showInputDialog(getContentPane(), "Wybierz kolumny", "Wybor kolumny", JOptionPane.QUESTION_MESSAGE, null, columnNames, columnNames[0]);
+                String sortParam = (String) JOptionPane.showInputDialog(getContentPane(), "Wybierz kolumne do sortowania", "Wybor sortowanie", JOptionPane.QUESTION_MESSAGE, null, columnNames, columnNames[1]);
+                statement = "select " + selectedColumn + " from " + selectedTable + " order by " + sortParam + " asc";
+                rSet = stmt.executeQuery(statement);
+                table = new JTable(buildTableModel(rSet));
+                table.setShowVerticalLines(false);
+                button.addActionListener(e -> Click());
+                GridBagConstraints c = new GridBagConstraints();
+                table.setSize(gui.getWidth(), 500);
+                resizeColumnWidth(table);
+                c.gridx = 0;
+                c.gridy = 0;
+                gui.add(new JScrollPane(table), c);
+                c.gridy = 1;
+                gui.add(button, c);
+                getContentPane().add(gui);
+                gui.updateUI();
+                columns.clear();
+                tables.clear();
+                rSet.close();
+                stmt.close();
+            }
+            catch (SQLException e){}
+            }
+
+        tables.clear();
+        columns.clear();
+        }
+
+    private void Click() {
+        String selectedRow = String.valueOf(table.getSelectedRow() + 1);
+        try{
+            statement = "select * from " + selectedTable;
+            stmt = connection.createStatement();
+            rSet = stmt.executeQuery(statement);
+            ResultSetMetaData rsmd = rSet.getMetaData();
+            statement = "update " + selectedTable + " set ";
+            columns.add("*");
+            for(int i = 1; i <= rsmd.getColumnCount(); i++){
+                if(Objects.equals(rsmd.getColumnName(i), "id")){
+                    statement += "id = " + selectedRow;
+                    continue;
+                }
+                else{
+                    String answer = (String) JOptionPane.showInputDialog(getContentPane(), rsmd.getColumnName(i), "Podaj wartosc", JOptionPane.INFORMATION_MESSAGE);
+                    System.out.println(rsmd.getColumnType(i));
+                    if(answer != ""){
+                        if(rsmd.getColumnType(i) == 4){
+                            if(answer.matches("[0-9]+")){
+                                statement += ", " + rsmd.getColumnName(i) + " = " + answer;
+                            }
+                        }
+                        else{
+                            statement += ", " + rsmd.getColumnName(i) + " = '" + answer + "'";
+                        }
+                    }
+                }
+            }
+            statement += " where id = " + selectedRow;
+            System.out.println(statement);
+            PreparedStatement ps = connection.prepareStatement(statement);
+            ps.executeUpdate();
+            table.repaint();
+            System.out.println("text");
+        }
+        catch(SQLException e){
+
+        }
+
+        tables.clear();
+        columns.clear();
+    }
+
+
+    private void Edytuj() {
+        String row = String.valueOf(table.getSelectedRow());
+        button.setText(row);
+    }
+
+    private void advQuery() {
+        if(connection == null){
+            JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
+        }
+        else{
+            JOptionPane.showConfirmDialog(getContentPane(), advancedQuery, "Wprowadz zapytanie", JOptionPane.OK_CANCEL_OPTION);
+            int answer  = JOptionPane.showConfirmDialog(getContentPane(), advQueryText.getText(), "Zapytanie", JOptionPane.OK_CANCEL_OPTION);
+            if(advQueryText.getText() == "")
+                JOptionPane.showMessageDialog(getContentPane(), "Zapytanie puste", "Blad zapytania", JOptionPane.ERROR_MESSAGE);
+            else if(advQueryText.getText().toLowerCase().contains("drop") || advQueryText.getText().toLowerCase().contains("delete") || advQueryText.getText().toLowerCase().contains("insert")
+                    || advQueryText.getText().toLowerCase().contains("update") || advQueryText.getText().toLowerCase().contains("create"))
+                JOptionPane.showMessageDialog(getContentPane(), "Nie poprawne zapytanie", "Nie poprawne zapytanie", JOptionPane.ERROR_MESSAGE);
+            else if(answer == JOptionPane.YES_OPTION){
+                getContentPane().remove(gui);
+                getContentPane().repaint();
+                gui.removeAll();
+                table = new JTable(0,0);
+                try{
+                    stmt = connection.createStatement();
+                    rSet = stmt.executeQuery(advQueryText.getText());
+                    table = new JTable(buildTableModel(rSet));
+                    table.setShowHorizontalLines(false);
+                    table.setSize(gui.getWidth(), 500);
+                    resizeColumnWidth(table);
+                    gui.add(new JScrollPane(table));
+                    getContentPane().add(gui);
+                    gui.updateUI();
+                    rSet.close();
+                    stmt.close();
+                }catch (SQLException e){
+
+                }
+            }
+            advQueryText.setText("Zapytanie");
+        }
+
+        tables.clear();
+        columns.clear();
+    }
+
+
+    private void dodajRekord() {
+        gui.removeAll();
+    }
+
     private int connect(String ipAddress, String databaseName, String userName, JPasswordField password) {
         try {
             Class.forName("org.postgresql.Driver");
@@ -294,5 +446,8 @@ public class Baza extends JFrame {
             ex.setVisible(true);
 
         });
+    }
+
+    private class MyClass {
     }
 }
