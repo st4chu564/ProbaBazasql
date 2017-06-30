@@ -271,11 +271,8 @@ public class Baza extends JFrame {
                 rSet = stmt.executeQuery(statement);
                 ResultSetMetaData rsmd = rSet.getMetaData();
                 columns.add("*");
-                for(int i = 1; i <= rsmd.getColumnCount(); i++){
-                    System.out.println(rsmd.getColumnName(i));
+                for(int i = 1; i <= rsmd.getColumnCount(); i++)
                     columns.add(rsmd.getColumnName(i));
-                }
-                System.out.println("proba");
                 Object[] columnNames = columns.toArray(new Object[columns.size()]);
                 String selectedColumn = (String) JOptionPane.showInputDialog(getContentPane(), "Wybierz kolumny", "Wybor kolumny", JOptionPane.QUESTION_MESSAGE, null, columnNames, columnNames[0]);
                 String sortParam = (String) JOptionPane.showInputDialog(getContentPane(), "Wybierz kolumne do sortowania", "Wybor sortowanie", JOptionPane.QUESTION_MESSAGE, null, columnNames, columnNames[1]);
@@ -357,7 +354,6 @@ public class Baza extends JFrame {
                 }
             }
             statement += " where id = " + selectedRow;
-            System.out.println(statement);
             PreparedStatement ps = connection.prepareStatement(statement);
             ps.executeUpdate();
             table.repaint();
@@ -377,8 +373,6 @@ public class Baza extends JFrame {
         else{
             JOptionPane.showConfirmDialog(getContentPane(), advancedQuery, "Wprowadz zapytanie", JOptionPane.OK_CANCEL_OPTION);
             int answer  = JOptionPane.showConfirmDialog(getContentPane(), advQueryText.getText(), "Zapytanie", JOptionPane.OK_CANCEL_OPTION);
-            if(advQueryText.getText().startsWith("$"))
-                System.out.println("dolec");
             if(advQueryText.getText() == "")
                 JOptionPane.showMessageDialog(getContentPane(), "Zapytanie puste", "Blad zapytania", JOptionPane.ERROR_MESSAGE);
             else if((advQueryText.getText().toLowerCase().contains("drop") || advQueryText.getText().toLowerCase().contains("delete") || advQueryText.getText().toLowerCase().contains("insert")
@@ -387,14 +381,15 @@ public class Baza extends JFrame {
                 return;
             }
             else if(answer == JOptionPane.YES_OPTION){
-                advQueryText.getText().replace("$", "");
+                if(advQueryText.getText().startsWith("$"))
+                    statement = advQueryText.getText().substring(1);
                 getContentPane().remove(gui);
                 getContentPane().repaint();
                 gui.removeAll();
                 table = new JTable(0,0);
                 try{
                     stmt = connection.createStatement();
-                    rSet = stmt.executeQuery(advQueryText.getText());
+                    rSet = stmt.executeQuery(statement);
                     table = new JTable(buildTableModel(rSet));
                     table.setShowHorizontalLines(false);
                     table.setSize(gui.getWidth(), 500);
