@@ -32,7 +32,7 @@ public class Baza extends JFrame {
     private JButton addRecord = new JButton("Dodaj rekord");
     private JButton removeRecord = new JButton("Usun");
     private JPanel gui = new JPanel();
-            Statement stmt = null;
+    Statement stmt = null;
     ResultSet rSet = null;
     Connection connection = null;
     private Vector<JTextField> fields = new Vector<>();
@@ -74,6 +74,7 @@ public class Baza extends JFrame {
         setLocationRelativeTo(null);
         setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
     }
+
     public void resizeColumnWidth(JTable table) {
         final TableColumnModel columnModel = table.getColumnModel();
         for (int column = 0; column < table.getColumnCount(); column++) {
@@ -81,14 +82,15 @@ public class Baza extends JFrame {
             for (int row = 0; row < table.getRowCount(); row++) {
                 TableCellRenderer renderer = table.getCellRenderer(row, column);
                 Component comp = table.prepareRenderer(renderer, row, column);
-                width = Math.max(comp.getPreferredSize().width +1 , width);
+                width = Math.max(comp.getPreferredSize().width + 1, width);
             }
-            if(width > 300)
-                width=300;
+            if (width > 300)
+                width = 300;
             columnModel.getColumn(column).setPreferredWidth(width);
         }
     }
-    private DefaultTableModel buildTableModel(ResultSet rs) throws SQLException{
+
+    private DefaultTableModel buildTableModel(ResultSet rs) throws SQLException {
 
         ResultSetMetaData metaData = rs.getMetaData();
         Vector<String> columnNames = new Vector<String>();
@@ -109,6 +111,7 @@ public class Baza extends JFrame {
 
         return new DefaultTableModel(data, columnNames);
     }
+
     private void createMenuBar() {
         JMenuBar menubar = new JMenuBar();
 
@@ -134,10 +137,10 @@ public class Baza extends JFrame {
         connectDB.setToolTipText("Polacz z juz istniejaca baza");
         exitMi.setToolTipText("Exit application");
         exitMi.addActionListener((ActionEvent) -> {
-            try{
+            try {
                 connection.close();
+            } catch (SQLException e) {
             }
-            catch (SQLException e){}
             System.exit(0);
         });
         exitMi.setAccelerator(KeyStroke.getKeyStroke(KeyEvent.VK_E, ActionEvent.CTRL_MASK));
@@ -152,16 +155,16 @@ public class Baza extends JFrame {
     }
 
     private void Insert() {
-        if(connection == null) {
+        if (connection == null) {
             JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        try{
+        try {
             gui.removeAll();
             DatabaseMetaData md = connection.getMetaData();
             String[] types = {"TABLE"};
             rSet = md.getTables(dbName.getText(), null, "%", types);
-            while(rSet.next()){
+            while (rSet.next()) {
                 tables.add(new String(rSet.getString(3)));
             }
             Object[] tableNames = tables.toArray(new Object[tables.size()]);
@@ -172,19 +175,19 @@ public class Baza extends JFrame {
             ResultSetMetaData rsmd = rSet.getMetaData();
             rSet.next();
             int lastID = rSet.getInt("id") + 1;
-            for(int i = 1; i <= rsmd.getColumnCount(); i++){
+            for (int i = 1; i <= rsmd.getColumnCount(); i++) {
                 columns.add(rsmd.getColumnName(i));
             }
             GridBagConstraints c = new GridBagConstraints();
             c.gridx = 0;
             c.gridy = 0;
             boolean first = true;
-            for(String name : columns){
+            for (String name : columns) {
                 JLabel nazwa = new JLabel(name);
                 gui.add(nazwa, c);
                 c.gridy++;
                 JTextField value = new JTextField();
-                if(first){
+                if (first) {
                     value.setText(String.valueOf(lastID));
                 }
                 fields.add(value);
@@ -193,7 +196,7 @@ public class Baza extends JFrame {
                 c.gridy = 0;
                 c.gridx++;
             }
-            addRecord.setPreferredSize(new Dimension(fields.size() * 150,25));
+            addRecord.setPreferredSize(new Dimension(fields.size() * 150, 25));
             addRecord.addActionListener(e -> insertRecord());
             c.gridy = 2;
             c.gridx = 0;
@@ -204,44 +207,52 @@ public class Baza extends JFrame {
             tables.clear();
             columns.clear();
 
+        } catch (SQLException e) {
         }
-        catch(SQLException e){}
     }
 
     private void insertRecord() {
-            statement = "INSERT INTO " + selectedTable + " VALUES(";
-            for (JTextField pole : fields) {
-                if (pole.getText().contains("[0-9]+")) {
-                    statement += pole.getText() + ", ";
-                } else {
-                    statement += "'" + pole.getText() + "', ";
-                }
+        statement = "INSERT INTO " + selectedTable + " VALUES(";
+        for (JTextField pole : fields) {
+            if (pole.getText().contains("[0-9]+")) {
+                statement += pole.getText() + ", ";
+            } else {
+                statement += "'" + pole.getText() + "', ";
             }
-            statement = statement.substring(0, statement.length() - 2);
-            statement += ")";
-            try {
-                stmt = connection.createStatement();
-                stmt.execute(statement);
-                stmt.close();
-                gui.removeAll();
-                gui.add(table);
-                gui.updateUI();
-            } catch (SQLException e) {
-            }
-
-            tables.clear();
-            columns.clear();
         }
+        statement = statement.substring(0, statement.length() - 2);
+        statement += ")";
+        try {
+            stmt = connection.createStatement();
+            stmt.execute(statement);
+            stmt.close();
+            gui.removeAll();
+            gui.add(table);
+            gui.updateUI();
+        } catch (SQLException e) {
+        }
+
+        tables.clear();
+        columns.clear();
+    }
 
     private void connectToDB() {
         int result = JOptionPane.showConfirmDialog(getContentPane(), inputs, "Enter options", JOptionPane.OK_CANCEL_OPTION);
         if (result == JOptionPane.OK_OPTION) {
             result = connect(ip.getText(), dbName.getText(), username.getText(), pass);
             switch (result) {
-                case -2: JOptionPane.showMessageDialog(getContentPane(), "Couldn't connect to database", "Blad", JOptionPane.ERROR_MESSAGE); break;
-                case -1: JOptionPane.showMessageDialog(getContentPane(), "Couldn't register database driver", "Blad", JOptionPane.ERROR_MESSAGE); break;
-                case 0: JOptionPane.showMessageDialog(getContentPane(), "Error connecting to database", "Blad", JOptionPane.ERROR_MESSAGE); break;
-                case 1: JOptionPane.showMessageDialog(getContentPane(), "Connection succesfull", "Sukces", JOptionPane.INFORMATION_MESSAGE); break;
+                case -2:
+                    JOptionPane.showMessageDialog(getContentPane(), "Couldn't connect to database", "Blad", JOptionPane.ERROR_MESSAGE);
+                    break;
+                case -1:
+                    JOptionPane.showMessageDialog(getContentPane(), "Couldn't register database driver", "Blad", JOptionPane.ERROR_MESSAGE);
+                    break;
+                case 0:
+                    JOptionPane.showMessageDialog(getContentPane(), "Error connecting to database", "Blad", JOptionPane.ERROR_MESSAGE);
+                    break;
+                case 1:
+                    JOptionPane.showMessageDialog(getContentPane(), "Connection succesfull", "Sukces", JOptionPane.INFORMATION_MESSAGE);
+                    break;
             }
         } else {
         }
@@ -252,17 +263,16 @@ public class Baza extends JFrame {
 
     private void query() {
 
-        if(connection == null){
+        if (connection == null) {
             JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
-        }
-        else{
+        } else {
             gui.removeAll();
-            Vector <String> Tabele = new Vector<>();
-            try{
+            Vector<String> Tabele = new Vector<>();
+            try {
                 DatabaseMetaData md = connection.getMetaData();
                 String[] types = {"TABLE"};
                 rSet = md.getTables(dbName.getText(), null, "%", types);
-                while(rSet.next()){
+                while (rSet.next()) {
                     tables.add(new String(rSet.getString(3)));
                 }
                 Object[] tableNames = tables.toArray(new Object[tables.size()]);
@@ -272,7 +282,7 @@ public class Baza extends JFrame {
                 rSet = stmt.executeQuery(statement);
                 ResultSetMetaData rsmd = rSet.getMetaData();
                 columns.add("*");
-                for(int i = 1; i <= rsmd.getColumnCount(); i++)
+                for (int i = 1; i <= rsmd.getColumnCount(); i++)
                     columns.add(rsmd.getColumnName(i));
                 Object[] columnNames = columns.toArray(new Object[columns.size()]);
                 String selectedColumn = (String) JOptionPane.showInputDialog(getContentPane(), "Wybierz kolumny", "Wybor kolumny", JOptionPane.QUESTION_MESSAGE, null, columnNames, columnNames[0]);
@@ -301,53 +311,51 @@ public class Baza extends JFrame {
                 tables.clear();
                 rSet.close();
                 stmt.close();
+            } catch (SQLException e) {
             }
-            catch (SQLException e){}
-            }
+        }
 
         tables.clear();
         columns.clear();
-        }
+    }
 
     private void Remove() {
         String selectedRow = String.valueOf(table.getValueAt(table.getSelectedRow(), 0));
-        int a = JOptionPane.showConfirmDialog(getContentPane(),"Czy na pewno chcesz usunac ten rekord?", "Potwierdz", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
-        if(a == JOptionPane.CANCEL_OPTION)
+        int a = JOptionPane.showConfirmDialog(getContentPane(), "Czy na pewno chcesz usunac ten rekord?", "Potwierdz", JOptionPane.OK_CANCEL_OPTION, JOptionPane.WARNING_MESSAGE);
+        if (a == JOptionPane.CANCEL_OPTION)
             return;
         statement = "delete from " + selectedTable + " where id = " + selectedRow;
-        try{
+        try {
             stmt = connection.createStatement();
             stmt.execute(statement);
+        } catch (SQLException e) {
         }
-        catch(SQLException e){}
 
     }
 
     private void Click() {
         String selectedRow = String.valueOf(table.getValueAt(table.getSelectedRow(), 0));
-        try{
+        try {
             statement = "select * from " + selectedTable;
             stmt = connection.createStatement();
             rSet = stmt.executeQuery(statement);
             ResultSetMetaData rsmd = rSet.getMetaData();
             statement = "update " + selectedTable + " set ";
             columns.add("*");
-            for(int i = 1; i <= rsmd.getColumnCount(); i++){
-                if(Objects.equals(rsmd.getColumnName(i), "id")){
+            for (int i = 1; i <= rsmd.getColumnCount(); i++) {
+                if (Objects.equals(rsmd.getColumnName(i), "id")) {
                     statement += "id = " + selectedRow;
                     continue;
-                }
-                else{
+                } else {
                     String answer = (String) JOptionPane.showInputDialog(getContentPane(), rsmd.getColumnName(i), "Podaj wartosc", JOptionPane.INFORMATION_MESSAGE);
-                    if(answer == null && answer.length() < 1)
+                    if (answer == null && answer.length() < 1)
                         return;
-                    if(answer != ""){
-                        if(rsmd.getColumnType(i) == 4){
-                            if(answer.matches("[0-9]+")){
+                    if (answer != "") {
+                        if (rsmd.getColumnType(i) == 4) {
+                            if (answer.matches("[0-9]+")) {
                                 statement += ", " + rsmd.getColumnName(i) + " = " + answer;
                             }
-                        }
-                        else{
+                        } else {
                             statement += ", " + rsmd.getColumnName(i) + " = '" + answer + "'";
                         }
                     }
@@ -357,38 +365,36 @@ public class Baza extends JFrame {
             PreparedStatement ps = connection.prepareStatement(statement);
             ps.executeUpdate();
             table.repaint();
-        }
-        catch(SQLException e){
+        } catch (SQLException e) {
 
         }
 
         tables.clear();
         columns.clear();
     }
+
     private void advQuery() {
-        if(connection == null){
+        if (connection == null) {
             JOptionPane.showMessageDialog(getContentPane(), "Nie podlaczono do bazy", "Blad polaczenia", JOptionPane.ERROR_MESSAGE);
-        }
-        else{
+        } else {
             JOptionPane.showConfirmDialog(getContentPane(), advancedQuery, "Wprowadz zapytanie", JOptionPane.OK_CANCEL_OPTION);
-            int answer  = JOptionPane.showConfirmDialog(getContentPane(), advQueryText.getText(), "Zapytanie", JOptionPane.OK_CANCEL_OPTION);
-            if(advQueryText.getText() == "")
+            int answer = JOptionPane.showConfirmDialog(getContentPane(), advQueryText.getText(), "Zapytanie", JOptionPane.OK_CANCEL_OPTION);
+            if (advQueryText.getText() == "")
                 JOptionPane.showMessageDialog(getContentPane(), "Zapytanie puste", "Blad zapytania", JOptionPane.ERROR_MESSAGE);
-            else if((advQueryText.getText().toLowerCase().contains("drop") || advQueryText.getText().toLowerCase().contains("delete") || advQueryText.getText().toLowerCase().contains("insert")
+            else if ((advQueryText.getText().toLowerCase().contains("drop") || advQueryText.getText().toLowerCase().contains("delete") || advQueryText.getText().toLowerCase().contains("insert")
                     || advQueryText.getText().toLowerCase().contains("update") || advQueryText.getText().toLowerCase().contains("create")) && !advQueryText.getText().startsWith("$")) {
                 JOptionPane.showMessageDialog(getContentPane(), "Nie poprawne zapytanie", "Nie poprawne zapytanie", JOptionPane.ERROR_MESSAGE);
                 return;
-            }
-            else if(answer == JOptionPane.CANCEL_OPTION)
+            } else if (answer == JOptionPane.CANCEL_OPTION)
                 return;
-            else if(answer == JOptionPane.YES_OPTION){
-                if(advQueryText.getText().startsWith("$"))
+            else if (answer == JOptionPane.YES_OPTION) {
+                if (advQueryText.getText().startsWith("$"))
                     statement = advQueryText.getText().substring(1);
                 getContentPane().remove(gui);
                 getContentPane().repaint();
                 gui.removeAll();
-                table = new JTable(0,0);
-                try{
+                table = new JTable(0, 0);
+                try {
                     stmt = connection.createStatement();
                     rSet = stmt.executeQuery(statement);
                     table = new JTable(buildTableModel(rSet));
@@ -400,7 +406,7 @@ public class Baza extends JFrame {
                     gui.updateUI();
                     rSet.close();
                     stmt.close();
-                }catch (SQLException e){
+                } catch (SQLException e) {
 
                 }
             }
@@ -431,9 +437,10 @@ public class Baza extends JFrame {
 
 
     public static void main(String[] args) {
-        EventQueue.invokeLater(() ->{
+        EventQueue.invokeLater(() -> {
             Baza ex = new Baza();
             ex.setVisible(true);
 
         });
     }
+}
